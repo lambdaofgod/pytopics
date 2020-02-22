@@ -23,6 +23,7 @@ class GSDMM:
         self.alpha = alpha
         self.beta = beta
         self.max_iter = max_iter
+        self.components_ = None
 
     def fit(self, X, min_changed_stopping=0, verbose=False):
         text_vector_indices = self._get_text_vector_indices(X)
@@ -30,7 +31,7 @@ class GSDMM:
         self.topic_document_counts = topic_document_counts
         self.topic_sizes = topic_sizes
         self.topic_word_counts = topic_word_counts
-        self.components_ = topic_word_counts / topic_word_counts.sum(axis=1)[:, np.newaxis]
+        self.components_ = np.nan_to_num(topic_word_counts / topic_word_counts.sum(axis=1)[:, np.newaxis])
         _iter = range(self.max_iter)
         if verbose:
             _iter = tqdm.tqdm(_iter)
