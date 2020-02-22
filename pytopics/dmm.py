@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import numba
 import tqdm
 import scipy
@@ -29,14 +30,13 @@ class GSDMM:
         self.topic_document_counts = topic_document_counts
         self.topic_sizes = topic_sizes
         self.topic_word_counts = topic_word_counts
+        self.components_ = topic_word_counts / topic_word_counts.sum(axis=1)[:, np.newaxis]
         _iter = range(self.max_iter)
         if verbose:
             _iter = tqdm.tqdm(_iter)
         for i in _iter:
             prev_document_topics = np.copy(document_topics)
             self.step(text_vector_indices, self.alpha, self.beta, topic_document_counts, topic_sizes, topic_word_counts, document_topics)
-            print(topic_sizes)
-            print(topic_document_counts)
             n_changed = np.sum(prev_document_topics != document_topics)
             if n_changed <= min_changed_stopping:
                 print('Converged at {}th iteration'.format(i))
@@ -58,7 +58,7 @@ class GSDMM:
         means that in document *i* word *j* has positon *w* in dictionary
         """
         n_documents = text_vectors.shape[0]
-        y_indices, x_indices, __ = scipy.sparse.find(text_vectors)
+        x_indices, y_indices, __ = scipy.sparse.find(text_vectors)
         max_doc_length = pd.DataFrame({'y': y_indices, 'x': x_indices}).groupby('x').agg('count').max()[0]
         doc_word_indices = -np.ones((n_documents, max_doc_length + 1), dtype='int32')
         for i in range(n_documents):
