@@ -26,6 +26,12 @@ class GSDMM:
         self.components_ = None
 
     def fit(self, X, min_changed_stopping=0, verbose=False):
+        """
+        Parameters
+        ----------
+        X: scipy.sparse matrix or ndarray. Input assumed to be vectorized text, like output of scikit-learn's CountVectorizer.transform
+        min_changed_stopping: If less documents than min_changed_stopping change clusters in an iteration, the fitting is stopped
+        """
         text_vector_indices = self._get_text_vector_indices(X)
         topic_document_counts, topic_sizes, topic_word_counts, document_topics = self._make_topics(text_vector_indices, self.n_components)
         self.topic_document_counts = topic_document_counts
@@ -45,11 +51,28 @@ class GSDMM:
         return self
 
     def transform(self, X):
+        """
+        Transform X into topic probabilities
+        """
         text_vector_indices = self._get_text_vector_indices(X)
         def sampling_1d(doc):
             return self._sampling_distribution(doc, self.alpha, self.beta, X.shape[0], self.topic_document_counts, self.topic_sizes, self.topic_word_counts)
 
         return np.apply_along_axis(sampling_1d, axis=1, arr=text_vector_indices)
+
+    def fit_transform(self, X):
+        self.fit(X)
+        return self.transform(X)
+
+    def predict(self, X):
+        """
+        Predict topics for each document vector
+        """
+        return self.transform(X).argmax(axis=1)
+
+    def fit_predict(self, X):
+        self.fit(X)
+        return self.predict(X)
 
     @classmethod
     def _get_text_vector_indices(cls, text_vectors):
